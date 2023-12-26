@@ -52,7 +52,9 @@ class Subscription(models.Model):
 
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
+    is_email_verified = models.BooleanField(default=False, null=False, blank=False)
     mobile_number = models.CharField(max_length=24, blank=True, null=True)
+    is_mobile_verified = models.BooleanField(default=False, null=False, blank=False)
     country_code = models.CharField(max_length=24, blank=True, default="")
     source = models.CharField(max_length=32, blank=True, default="")
     is_trial_expired = models.BooleanField(

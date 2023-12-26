@@ -1,4 +1,3 @@
-from dataclasses import field
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 from Users.models import CustomUser, Subscription
@@ -79,4 +78,11 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     def update(self, subscription_id, validated_data):
         return Subscription.update_subscription(subscription_id=subscription_id.id, kwargs=validated_data)
+    
+class EmailSerializer(serializers.Serializer):
+    email = serializers.CharField()
 
+    def validate_email(self, email):
+        return RegexValidation(field_data=email, regex_pattern=EMAIL_PATTERN, error_message=INVALID_EMAIL_FORMAT).regex_validator()
+
+ 

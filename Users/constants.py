@@ -1,5 +1,8 @@
 # messages
-USER_EXISTS = "User with {username} is already exists. Please check inbox."
+import email
+
+
+USER_EXISTS = "User with {username} is already exists."
 USER_CREATED = "User: {username} created Successfully. Id : {id}"
 SUBSCRIPTION_ADDED = "Subscription is added Successfully with Id : {id} "
 USER_UPDATED = "User : {username}'s data is updated successfully."
@@ -23,6 +26,8 @@ INVALID_COUNTRY_CODE = "Please enter valid country code"
 MOBILE_NUMBER_ALREADY_EXIST = "Mobile number already exist."
 PASSWORD_AND_CONFIRM_PASSWORD_NOT_MATCH = "Password and conﬁrm password doesn’t match."
 SUBSCRIPTION_UPDATED = "Subscription : {id}'s data is updated successfully."
+EMAIL_SENT_SUCCESSFULLY = "Email is sent successfully on {email}"
+EMAIL_VERIFICATION_LINK_SHARED='Please verify your email, link is shared on {email}'
 
 # Regex
 PASSWORD_PATTERN = "^(?!.*\s)(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{10,}$"

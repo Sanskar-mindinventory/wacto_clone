@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -44,6 +44,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework_simplejwt',
     'rest_framework',
+    'social_django',
+    'drf_social_oauth2',
+    'oauth2_provider',
     'Users'
 ]
 
@@ -59,6 +62,8 @@ MIDDLEWARE = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+        'drf_social_oauth2.authentication.SocialAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
@@ -77,6 +82,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -144,7 +151,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = "Users.CustomUser"
 
 # Custom authentication backend
-AUTHENTICATION_BACKENDS = ['Users.custom_backends.EmailorUsername',]
+AUTHENTICATION_BACKENDS = [
+    'social_core.backends.facebook.FacebookAppOAuth2',
+    'social_core.backends.facebook.FacebookOAuth2',
+
+    # drf_social_oauth2
+    'drf_social_oauth2.backends.DjangoOAuth2',
+
+    # Custom Backend for the login
+    'Users.custom_backends.EmailorUsername',
+    ]
 
 # JWT Token Settings
 SIMPLE_JWT = {
@@ -155,4 +171,28 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": os.getenv("UPDATE_LAST_LOGIN", False),
     "ALGORITHM": os.getenv("ALGORITHM"),
     "SIGNING_KEY": os.getenv('SECRET_KEY'),
+}
+
+# Google Social Auth Keys
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = 'your-google-client-id'
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'your-google-client-secret'
+
+# # OAUTH2 PROVIDER SETTINGS
+# OAUTH2_PROVIDER = {
+#     'SCOPES': {'read': 'Read scope', 'write': 'Write scope', 'groups': 'Access to your groups'},
+#     'ACCESS_TOKEN_EXPIRE_SECONDS':timedelta(seconds=int(os.getenv('ACCESS_TOKEN_EXPIRE_SECONDS'))),
+#     'REFRESH_TOKEN_EXPIRE_SECONDS':timedelta(seconds=int(os.getenv('REFRESH_TOKEN_EXPIRE_SECONDS'))),
+#     # Add other OAuth2 provider configurations as needed
+# }
+
+
+SOCIAL_AUTH_FACEBOOK_KEY = os.getenv('FACEBOOK_APP_ID')
+SOCIAL_AUTH_FACEBOOK_SECRET = os.getenv('FACEBOOK_SECRET_KEY')
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'http://192.168.1.166:9000/signup'
+
+
+
+SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
+SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
+    'fields': 'id, name, email'
 }

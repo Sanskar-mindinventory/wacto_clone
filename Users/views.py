@@ -1,12 +1,22 @@
 from django.http import JsonResponse
 from rest_framework.views import APIView
 
-from Users.services import CreateUserService, SubscriptionService, UserService
+from Users.services import CreateUserService, SubscriptionService, UserService, SendVerificationEmailService
+
+class CheckEmailAvailabilityView(APIView):
+    def post(self, request, *args, **kwargs):
+        return SendVerificationEmailService(request=request, kwargs=kwargs).check_email_availability()
+
+
+class EmailVerificationView(APIView):
+    def get(self, request, *args, **kwargs):
+        breakpoint()
+        return SendVerificationEmailService(request=request, kwargs=kwargs).verify_email_view()
 
 
 class CreateUserView(APIView):
     def get(self, request, *args, **kwargs):
-        return JsonResponse({"msg": "Wacto-Clone Service is running successfully.   "})
+        return JsonResponse({"msg": "Wacto-Clone Service is running successfully."})
 
     def post(self, request, *args, **kwargs):
         return CreateUserService(request=request).post_view()

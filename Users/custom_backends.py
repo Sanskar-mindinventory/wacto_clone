@@ -1,17 +1,10 @@
-from rest_framework import authentication
-from django.contrib.auth.backends import AllowAllUsersModelBackend, BaseBackend
+from django.contrib.auth.backends import AllowAllUsersModelBackend
 from django.contrib.auth import get_user_model
 from Users.constants import EMAIL_PATTERN, INVALID_EMAIL_FORMAT
-
-from regex_validations import RegexValidation
 from django.db.models import Q
 User = get_user_model()
 
-
-
-
-
-class EmailorUsername(authentication.BaseAuthentication):
+class EmailorUsername(AllowAllUsersModelBackend):
     """
     This is a ModelBacked that allows authentication with either a username or an email address.
     """
