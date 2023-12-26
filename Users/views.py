@@ -10,7 +10,6 @@ class CheckEmailAvailabilityView(APIView):
 
 class EmailVerificationView(APIView):
     def get(self, request, *args, **kwargs):
-        breakpoint()
         return SendVerificationEmailService(request=request, kwargs=kwargs).verify_email_view()
 
 
