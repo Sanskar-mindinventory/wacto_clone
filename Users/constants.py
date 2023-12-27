@@ -32,6 +32,7 @@ RESET_PASSWORD_EMAIL_SENT = 'Reset Password email is shared successfully'
 EMAIL_IS_NOT_VERIFIED = "Email is not verified or doesn't exist."
 PASSWORD_AND_OLD_PASSWORD_ARE_SAME="Password and old passwords are same.Please choose another one."
 PASSWORD_CHANGED_SUCCESSFULLY = "Password is changed successfully"
+YOU_DONT_HAVE_PERMISSION_TO_PERFORM_THIS_ACTION="You don't have permissions to perform this action."
 
 # Regex
 PASSWORD_PATTERN = "^(?!.*\s)(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{10,}$"

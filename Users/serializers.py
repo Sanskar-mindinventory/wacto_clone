@@ -3,7 +3,7 @@ from rest_framework import serializers
 from Users.models import CustomUser, Subscription
 from Users.utils.common_utils import CommonUtils, SendVerificationEmail
 from regex_validations import RegexValidation
-from Users.constants import COUNTRY_CODE_MISSING, EMAIL_PATTERN, EMAIL_VERIFICATION_LINK_SHARED, FIRST_NAME_PATTERN, INVALID_COUNTRY_CODE, INVALID_EMAIL_FORMAT, INVALID_FIRST_NAME, INVALID_LAST_NAME, INVALID_MOBILE_NUMBER, INVALID_PASSWORD_FORMAT, LAST_NAME_PATTERN, MOBILE_NUMBER_ALREADY_EXIST, MOBILE_NUMBER_PATTERN, PASSWORD_AND_CONFIRM_PASSWORD_NOT_MATCH, PASSWORD_AND_OLD_PASSWORD_ARE_SAME, PASSWORD_PATTERN, SOURCE_ERROR, USER_DOES_NOT_EXIST, USERNAME_PATTERN, INVALID_USERNAME_FORMAT
+from Users.constants import COUNTRY_CODE_MISSING, EMAIL_PATTERN, EMAIL_VERIFICATION_LINK_SHARED, FIRST_NAME_PATTERN, INVALID_COUNTRY_CODE, INVALID_EMAIL_FORMAT, INVALID_FIRST_NAME, INVALID_LAST_NAME, INVALID_MOBILE_NUMBER, INVALID_PASSWORD_FORMAT, LAST_NAME_PATTERN, MOBILE_NUMBER_ALREADY_EXIST, MOBILE_NUMBER_PATTERN, PASSWORD_AND_CONFIRM_PASSWORD_NOT_MATCH, PASSWORD_AND_OLD_PASSWORD_ARE_SAME, PASSWORD_PATTERN, SOURCE_ERROR, USER_DOES_NOT_EXIST, USERNAME_PATTERN, INVALID_USERNAME_FORMAT, YOU_DONT_HAVE_PERMISSION_TO_PERFORM_THIS_ACTION
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db.models import Q
 
@@ -48,6 +48,12 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(MOBILE_NUMBER_ALREADY_EXIST)
         if attrs.get("password") != attrs.get("confirm_password"):
             raise serializers.ValidationError(PASSWORD_AND_CONFIRM_PASSWORD_NOT_MATCH)
+        if attrs.get('is_admin') and not self.context.get('request').user.is_superuser:
+            raise serializers.ValidationError(YOU_DONT_HAVE_PERMISSION_TO_PERFORM_THIS_ACTION)
+        if attrs.get('is_staff') and not self.context.get('request').user.is_superuser:
+            raise serializers.ValidationError(YOU_DONT_HAVE_PERMISSION_TO_PERFORM_THIS_ACTION)
+        if attrs.get('is_superuser') and not self.context.get('request').user.is_superuser:
+            raise serializers.ValidationError(YOU_DONT_HAVE_PERMISSION_TO_PERFORM_THIS_ACTION)
         return attrs
 
     def create(self, validated_data):

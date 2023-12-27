@@ -1,22 +1,15 @@
 from django.http import JsonResponse
 from rest_framework.views import APIView
-from Users.custom_permissions import IsAdminUser
-from Users.services import ChangePasswordService, CreateUserService, ListAllUserService, ResetPasswordService, SubscriptionService, UserService, SendVerificationEmailService
+from CustomAdmin.custom_permissions import IsAdminUser, IsSuperAdminUser
+from CustomAdmin.services import CreateUserService, ListAllUserService, SubscriptionService, UserService
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 
-class CheckEmailAvailabilityView(APIView):
-    def post(self, request, *args, **kwargs):
-        return SendVerificationEmailService(request=request, kwargs=kwargs).check_email_availability()
+class AdminCreateUserView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsSuperAdminUser]
 
-
-class EmailVerificationView(APIView):
-    def get(self, request, *args, **kwargs):
-        return SendVerificationEmailService(request=request, kwargs=kwargs).verify_email_view()
-
-
-class CreateUserView(APIView):
     def get(self, request, *args, **kwargs):
         return JsonResponse({"msg": "Wacto-Clone Service is running successfully."})
 
@@ -24,7 +17,7 @@ class CreateUserView(APIView):
         return CreateUserService(request=request).post_view()
 
 
-class UserView(APIView):
+class AdminUserView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated] 
 
@@ -47,24 +40,8 @@ class SubscriptionView(APIView):
    
     def put(self, request, *args, **kwargs):
         return SubscriptionService(request=request, kwargs=kwargs).update_subscription_view()
-    
-class ResetPasswordView(APIView):   
-    def post(self, request, *args, **kwargs):
-        return ResetPasswordService(request=request, kwargs=kwargs).send_reset_password_email()
-    
 
-class ResetPasswordConfirmView(APIView):
-    def post(self, request, *args, **kwargs):
-        return ResetPasswordService(request=request, kwargs=kwargs).change_forgotted_password()
-    
 
-class ChangePasswordView(APIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated] 
-
-    def post(self,request, *args, **kwargs):
-        return ChangePasswordService(request=request, kwargs=kwargs).change_password()
-    
 class ListAllUserView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdminUser] 
