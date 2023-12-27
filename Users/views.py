@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from rest_framework.views import APIView
 
-from Users.services import CreateUserService, SubscriptionService, UserService, SendVerificationEmailService
+from Users.services import ChangePasswordService, CreateUserService, ResetPasswordService, SubscriptionService, UserService, SendVerificationEmailService
 
 class CheckEmailAvailabilityView(APIView):
     def post(self, request, *args, **kwargs):
@@ -41,3 +41,17 @@ class SubscriptionView(APIView):
    
     def put(self, request, *args, **kwargs):
         return SubscriptionService(request=request, kwargs=kwargs).update_subscription_view()
+    
+class ResetPasswordView(APIView):   
+    def post(self, request, *args, **kwargs):
+        return ResetPasswordService(request=request, kwargs=kwargs).send_reset_password_email()
+    
+
+class ResetPasswordConfirmView(APIView):
+    def post(self, request, *args, **kwargs):
+        return ResetPasswordService(request=request, kwargs=kwargs).change_forgotted_password()
+    
+
+class ChangePasswordView(APIView):
+    def post(self,request, *args, **kwargs):
+        return ChangePasswordService(request=request, kwargs=kwargs).change_password()

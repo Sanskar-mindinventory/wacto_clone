@@ -27,7 +27,11 @@ MOBILE_NUMBER_ALREADY_EXIST = "Mobile number already exist."
 PASSWORD_AND_CONFIRM_PASSWORD_NOT_MATCH = "Password and conﬁrm password doesn’t match."
 SUBSCRIPTION_UPDATED = "Subscription : {id}'s data is updated successfully."
 EMAIL_SENT_SUCCESSFULLY = "Email is sent successfully on {email}"
-EMAIL_VERIFICATION_LINK_SHARED='Please verify your email, link is shared on {email}'
+EMAIL_VERIFICATION_LINK_SHARED='Email is not verified, Please verify your email, link is shared on {email}'
+RESET_PASSWORD_EMAIL_SENT = 'Reset Password email is shared successfully'
+EMAIL_IS_NOT_VERIFIED = "Email is not verified or doesn't exist."
+PASSWORD_AND_OLD_PASSWORD_ARE_SAME="Password and old passwords are same.Please choose another one."
+PASSWORD_CHANGED_SUCCESSFULLY = "Password is changed successfully"
 
 # Regex
 PASSWORD_PATTERN = "^(?!.*\s)(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{10,}$"

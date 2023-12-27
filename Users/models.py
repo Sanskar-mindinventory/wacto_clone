@@ -63,7 +63,7 @@ class CustomUser(AbstractUser):
     subscription_date = models.DateTimeField(null=True, blank=True)
     subscription_type = models.ForeignKey(Subscription ,on_delete=models.CASCADE, default=1)
     terms_and_condition = models.BooleanField(default=True, blank=False, null=False)
-    is_admin = models.BooleanField(default=True, blank=False, null=False)
+    is_admin = models.BooleanField(default=False, blank=False, null=False)
 
     @classmethod
     def create_custom_user(cls, kwargs):

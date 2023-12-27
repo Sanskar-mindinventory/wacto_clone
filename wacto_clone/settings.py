@@ -152,8 +152,12 @@ AUTH_USER_MODEL = "Users.CustomUser"
 
 # Custom authentication backend
 AUTHENTICATION_BACKENDS = [
+    # Facebook OAuth2
     'social_core.backends.facebook.FacebookAppOAuth2',
     'social_core.backends.facebook.FacebookOAuth2',
+
+    # Google  OAuth2
+    'social_core.backends.google.GoogleOAuth2',
 
     # drf_social_oauth2
     'drf_social_oauth2.backends.DjangoOAuth2',
@@ -171,11 +175,12 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": os.getenv("UPDATE_LAST_LOGIN", False),
     "ALGORITHM": os.getenv("ALGORITHM"),
     "SIGNING_KEY": os.getenv('SECRET_KEY'),
+    "TOKEN_OBTAIN_SERIALIZER": "Users.serializers.MyTokenObtainPairSerializer"
 }
 
 # Google Social Auth Keys
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = 'your-google-client-id'
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'your-google-client-secret'
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY")
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET")
 
 # # OAUTH2 PROVIDER SETTINGS
 # OAUTH2_PROVIDER = {
@@ -185,13 +190,19 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'your-google-client-secret'
 #     # Add other OAuth2 provider configurations as needed
 # }
 
-
-SOCIAL_AUTH_FACEBOOK_KEY = os.getenv('FACEBOOK_APP_ID')
-SOCIAL_AUTH_FACEBOOK_SECRET = os.getenv('FACEBOOK_SECRET_KEY')
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'http://192.168.1.166:9000/signup'
 
+# GOOGLE CREDENTIALS AND SOCIAL AUTH SETTINGS
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY")
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET")
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+]
 
-
+# FACEBOOK CREDENTIALS AND SOCIAL AUTH SETTINGS
+SOCIAL_AUTH_FACEBOOK_KEY = os.getenv('FACEBOOK_APP_ID')
+SOCIAL_AUTH_FACEBOOK_SECRET = os.getenv('FACEBOOK_SECRET_KEY')
 SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
 SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
     'fields': 'id, name, email'

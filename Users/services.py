@@ -1,13 +1,12 @@
+from multiprocessing import context
 from django.contrib.auth.tokens import default_token_generator
-from urllib import request
 from django.http import JsonResponse
-from Users.constants import EMAIL_SENT_SUCCESSFULLY, EMAIL_VERIFICATION_LINK_SHARED, SUBSCRIPTION_ADDED, SUBSCRIPTION_DOES_NOT_EXIST, SUBSCRIPTION_UPDATED, USER_CREATED, USER_DOES_NOT_EXIST, USER_EXISTS, USER_UPDATED, YOU_CAN_NOT_UPDATE
+from Users.constants import EMAIL_IS_NOT_VERIFIED, EMAIL_SENT_SUCCESSFULLY, EMAIL_VERIFICATION_LINK_SHARED, PASSWORD_CHANGED_SUCCESSFULLY, RESET_PASSWORD_EMAIL_SENT, SOMETHING_WENT_WRONG, SUBSCRIPTION_ADDED, SUBSCRIPTION_DOES_NOT_EXIST, SUBSCRIPTION_UPDATED, USER_CREATED, USER_DOES_NOT_EXIST, USER_EXISTS, USER_UPDATED, YOU_CAN_NOT_UPDATE
 from Users.models import CustomUser, Subscription
-from Users.serializers import EmailSerializer, SubscriptionSerializer, UserSerializer
+from Users.serializers import ChangePasswordSerializer, EmailSerializer, ForgotPasswordSerializer, SubscriptionSerializer, UserSerializer
 from django.utils.http import urlsafe_base64_decode
 
-from Users.utils.common_utils import CommonUtils
-from Users.utils.email_utils import EmailUtils
+from Users.utils.common_utils import CommonUtils, SendVerificationEmail
 
 class CreateUserService:
     def __init__(self, request):
@@ -18,18 +17,10 @@ class CreateUserService:
         serialized_user = UserSerializer(data=data)
         if serialized_user.is_valid():
             user = serialized_user.save()
-            SendVerificationEmail.send_verification_email(request=self.request, user=user)
+            SendVerificationEmail.send_verification_email(request_site=self.request, user=user)
             msg = USER_CREATED.format(username=user.username, id=user.id)
             return JsonResponse({"msg": msg, 'data': serialized_user.data}, status=201)
         return JsonResponse(serialized_user.errors, status=400)
-
-
-class SendVerificationEmail:
-    @staticmethod
-    def send_verification_email(request, user):
-        context = CommonUtils(request=request).create_context(user=user)
-        html_content = f'<a type="button" style="color: #0a3370;padding: 7px 15px; color: #fff; background: #0a3370; border-radius: 20px;text-decoration: none;display: inline-block;" href="{context.get("protocol")}://{context.get("domain")}/user-auth/email-verification/{context.get("uid")}/{context.get("token")}/">Verification Link</a>'
-        EmailUtils().send_email(to_emails=user.email, subject='Testing Mail', html_content=html_content)
 
 
 class UserService:
@@ -109,16 +100,14 @@ class SendVerificationEmailService:
     def check_email_availability(self):
         data = self.request.data
         user = CustomUser.get_user(kwargs={'email':data.get('email')})
-        # todo: Need to add Redirect routes for the login if company is already added.
         redirect_uri = '/signup'
         if user:
             if user.is_email_verified:
-                redirect_uri='/companydetails'
-                return JsonResponse({'msg':USER_EXISTS.format(username=user.email), 'redirect_uri':redirect_uri}, status=200)
+                return JsonResponse({'msg':USER_EXISTS.format(username=user.email)}, status=200)
             else:
                 email = EmailSerializer(data=data)
                 if email.is_valid():
-                    SendVerificationEmail.send_verification_email(request=request, user=user)
+                    SendVerificationEmail.send_verification_email(request_site=self.request, user=user)
                 return JsonResponse({'msg':EMAIL_VERIFICATION_LINK_SHARED.format(email=user.email)}, status=400)
         return JsonResponse({'msg':'Success', 'redirect_uri':redirect_uri}, status=200)
 
@@ -127,7 +116,7 @@ class SendVerificationEmailService:
         user_token = self.kwargs.get('token')
         email = urlsafe_base64_decode(user_email_base_64).decode('utf-8')
         user = CustomUser.get_user(kwargs={'email':email})
-        if self.validate_token(token=user_token, user=user):     
+        if self.validate_token(token=user_token, user=user):
             user.is_email_verified = True
             user.save()
             return JsonResponse({'msg': "Email is verified successfully"}, status=200)
@@ -138,3 +127,46 @@ class SendVerificationEmailService:
         token_generator = default_token_generator
         is_not_expired = token_generator.check_token(user=user, token=token)
         return is_not_expired
+
+
+class ResetPasswordService:
+    def __init__(self, request, kwargs):
+        self.request = request
+        self.kwargs = kwargs
+
+    def send_reset_password_email(self):
+        data = self.request.data
+        email = EmailSerializer(data=data)
+        user = CustomUser.get_user(kwargs={'email':data.get('email')})
+        if user and email.is_valid():
+            SendVerificationEmail.send_reset_password_email(request_site=self.request, user=user)
+            return JsonResponse({'msg':RESET_PASSWORD_EMAIL_SENT}, status=200)
+        return JsonResponse({'msg':EMAIL_IS_NOT_VERIFIED}, status=200)
+    
+    def change_forgotted_password(self):
+        data = self.request.data
+        user_email_base_64 = self.kwargs.get('uidb64')
+        # Need to add user token validation.
+        user_token = self.kwargs.get('token')
+        email = urlsafe_base64_decode(user_email_base_64).decode('utf-8')
+        user = CustomUser.get_user(kwargs={"email":email})
+        password = ForgotPasswordSerializer(instance=user, data=data)
+        if password.is_valid():
+            password.save()
+            return JsonResponse({"msg":PASSWORD_CHANGED_SUCCESSFULLY}, status=200)
+        return JsonResponse(password.errors, status=400)
+    
+    
+class ChangePasswordService:
+    def __init__(self, request, kwargs):
+        self.request =request
+        self.kwargs = kwargs
+
+    def change_password(self):
+        data = self.request.data    
+        user = CustomUser.get_user(kwargs={"id": data.get('id')})
+        password = ChangePasswordSerializer(instance=user, data=data, context={'request':self.request})
+        if password.is_valid():
+            password.save()
+            return JsonResponse({"msg":PASSWORD_CHANGED_SUCCESSFULLY}, status=200)
+        return JsonResponse(password.errors, status=400)
