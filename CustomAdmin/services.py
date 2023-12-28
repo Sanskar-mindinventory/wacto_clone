@@ -16,7 +16,7 @@ class CreateUserService:
         if serialized_user.is_valid():
             user = serialized_user.save()
             SendVerificationEmail.send_verification_email(request_site=self.request, user=user)
-            msg = USER_CREATED.format(username=user.username, id=user.id)
+            msg = USER_CREATED.format(email=user.email)
             return JsonResponse({"msg": msg, 'data': serialized_user.data}, status=201)
         return JsonResponse(serialized_user.errors, status=400)
 

@@ -27,12 +27,14 @@ class AdminUserView(APIView):
     def post(self, request, *args, **kwargs):
         return UserService(request=request, kwargs=kwargs).post_view()
 
+
 class AllSubscriptionView(APIView):
     def get(self, request, *args, **kwargs):
         return SubscriptionService(request=request, kwargs=kwargs).get_all_subscription_view()
 
     def post(self, request, *args, **kwargs):
         return SubscriptionService(request=request, kwargs=kwargs).add_new_subscription()
+
 
 class SubscriptionView(APIView):
     def get(self, request, *args, **kwargs):

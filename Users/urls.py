@@ -1,5 +1,5 @@
 from django.urls import path
-from Users.views import AllSubscriptionView, CreateUserView, EmailVerificationView, ListAllUserView, SubscriptionView, UserView, CheckEmailAvailabilityView, ResetPasswordView, ResetPasswordConfirmView, ChangePasswordView
+from Users.views import AllSubscriptionView, CreateUserView, EmailVerificationView, ListAllUserView, SendMobileOTPView, SubscriptionView, UserView, CheckEmailAvailabilityView, ResetPasswordView, ResetPasswordConfirmView, ChangePasswordView, VerifyMobileOTPView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
 urlpatterns = [
@@ -13,6 +13,9 @@ urlpatterns = [
     path('reset-password/', ResetPasswordView.as_view(), name='reset_password'),
     path('reset-password-confirm/<uidb64>/<token>/', ResetPasswordConfirmView.as_view(), name='reset_password_confirm'),
     path('change-password/',ChangePasswordView.as_view(), name="change_password"),
+    path('send-otp/', SendMobileOTPView.as_view(), name='send_otp'),
+    path('verify-otp/', VerifyMobileOTPView.as_view(), name='verify_otp'),
+
     # JWT Authentication Views
     path('login/', TokenObtainPairView.as_view(), name='login_user'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

@@ -1,11 +1,15 @@
+from datetime import datetime, timedelta, timezone
+import os
 from django.contrib.auth.tokens import default_token_generator
 from django.http import JsonResponse
-from Users.constants import EMAIL_IS_NOT_VERIFIED, EMAIL_SENT_SUCCESSFULLY, EMAIL_VERIFICATION_LINK_SHARED, PASSWORD_CHANGED_SUCCESSFULLY, RESET_PASSWORD_EMAIL_SENT, SOMETHING_WENT_WRONG, SUBSCRIPTION_ADDED, SUBSCRIPTION_DOES_NOT_EXIST, SUBSCRIPTION_UPDATED, USER_CREATED, USER_DOES_NOT_EXIST, USER_EXISTS, USER_UPDATED, YOU_CAN_NOT_UPDATE
+import pytz
+import requests
+from Users.constants import ACCOUNT_DOESNT_EXIST, EMAIL_IS_NOT_VERIFIED, EMAIL_SENT_SUCCESSFULLY, EMAIL_VERIFICATION_LINK_SHARED, MESSAGE_TEMPLATE, MOBILE_NUMBER_VERIFIED, NETTYFISH_MESSAGE_SEND_URL, OTP_SHARED_SUCCESSFULLY, PASSWORD_CHANGED_SUCCESSFULLY, RESET_PASSWORD_EMAIL_SENT, SOMETHING_WENT_WRONG, SUBSCRIPTION_ADDED, SUBSCRIPTION_DOES_NOT_EXIST, SUBSCRIPTION_UPDATED, USER_CREATED, USER_DOES_NOT_EXIST, USER_EXISTS, USER_UPDATED, YOU_CAN_NOT_UPDATE
 from Users.models import CustomUser, Subscription
-from Users.serializers import ChangePasswordSerializer, EmailSerializer, ForgotPasswordSerializer, SubscriptionSerializer, UserSerializer
+from Users.serializers import ChangePasswordSerializer, EmailSerializer, ForgotPasswordSerializer, OTPSerializer, SubscriptionSerializer, UserSerializer
 from django.utils.http import urlsafe_base64_decode
 
-from Users.utils.common_utils import CommonUtils, SendVerificationEmail
+from Users.utils.common_utils import CommonUtils, OTPGeneration, SendVerificationEmail
 
 class CreateUserService:
     def __init__(self, request):
@@ -17,7 +21,7 @@ class CreateUserService:
         if serialized_user.is_valid():
             user = serialized_user.save()
             SendVerificationEmail.send_verification_email(request_site=self.request, user=user)
-            msg = USER_CREATED.format(username=user.username, id=user.id)
+            msg = USER_CREATED.format(email=user.email)
             return JsonResponse({"msg": msg, 'data': serialized_user.data}, status=201)
         return JsonResponse(serialized_user.errors, status=400)
 
@@ -102,7 +106,7 @@ class SendVerificationEmailService:
         redirect_uri = '/signup'
         if user:
             if user.is_email_verified:
-                return JsonResponse({'msg':USER_EXISTS.format(username=user.email)}, status=200)
+                return JsonResponse({'msg':USER_EXISTS}, status=200)
             else:
                 email = EmailSerializer(data=data)
                 if email.is_valid():
@@ -140,7 +144,7 @@ class ResetPasswordService:
         if user and email.is_valid():
             SendVerificationEmail.send_reset_password_email(request_site=self.request, user=user)
             return JsonResponse({'msg':RESET_PASSWORD_EMAIL_SENT}, status=200)
-        return JsonResponse({'msg':EMAIL_IS_NOT_VERIFIED}, status=200)
+        return JsonResponse({'msg':ACCOUNT_DOESNT_EXIST}, status=200)
     
     def change_forgotted_password(self):
         data = self.request.data
@@ -180,3 +184,38 @@ class ListAllUserService:
         users = CustomUser.get_user()
         users_data = UserSerializer(users, many=True, context={'request':self.request})
         return JsonResponse(users_data.data, status=200, safe=False)
+    
+
+class MobileOTPService:
+    def __init__(self, request, kwargs):
+        self.request = request
+        self.kwargs = kwargs
+
+    def send_otp(self):
+        generated_otp = OTPGeneration.create_otp(n=4)
+        user = CustomUser.get_user(kwargs={"id":self.request.user.id})
+        json_payload = {
+            "senderId": os.getenv("SENDER_ID"),
+            "message": MESSAGE_TEMPLATE.format(minutes=os.getenv('OTP_EXPIRY_TIME','5'),generated_otp=generated_otp),
+            "mobileNumbers": user.mobile_number,
+            "templateId": os.getenv("TEMPLATE_ID"),
+            "apiKey": os.getenv("NETTYFISH_API_KEY"),
+            "clientId": os.getenv("NETTYFISH_CLIENT_ID")            
+        }
+        response = requests.post(url=NETTYFISH_MESSAGE_SEND_URL, json=json_payload)
+        current_time = datetime.now(timezone.utc).replace(tzinfo=pytz.utc)
+        otp_expiry_time = (datetime.strptime(current_time.strftime('%Y-%m-%d %H:%M:%S.%f'),
+                                                     '%Y-%m-%d %H:%M:%S.%f') + timedelta(minutes=int(os.getenv('OTP_EXPIRY_TIME','5')))).replace(
+                    tzinfo=pytz.utc)
+        user = CustomUser.update_user(user_id=self.request.user.id,kwargs={'otp':generated_otp, 'otp_expiry_time':otp_expiry_time})
+        return JsonResponse({'msg': OTP_SHARED_SUCCESSFULLY.format(mobile=f"{user.country_code}-{user.mobile_number}")},status=200)
+
+
+    def verify_otp(self):
+        data  = self.request.data 
+        user = CustomUser.get_user(kwargs={"id":self.request.user.id})
+        otp_data = OTPSerializer(instance=user, data=data, context={"request":self.request})
+        if otp_data.is_valid():
+            otp_data.save()
+            return JsonResponse({'msg':MOBILE_NUMBER_VERIFIED}, status=200)
+        return JsonResponse(otp_data.errors, status=400)

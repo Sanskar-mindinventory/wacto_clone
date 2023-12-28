@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from Users.custom_permissions import IsAdminUser
-from Users.services import ChangePasswordService, CreateUserService, ListAllUserService, ResetPasswordService, SubscriptionService, UserService, SendVerificationEmailService
+from Users.services import ChangePasswordService, CreateUserService, ListAllUserService, MobileOTPService, ResetPasswordService, SubscriptionService, UserService, SendVerificationEmailService
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 
@@ -65,9 +65,26 @@ class ChangePasswordView(APIView):
     def post(self,request, *args, **kwargs):
         return ChangePasswordService(request=request, kwargs=kwargs).change_password()
     
+
 class ListAllUserView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdminUser] 
 
     def get(self, request, *args, **kwargs):
         return ListAllUserService(request=request, kwargs=kwargs).get_all_users()
+
+
+class SendMobileOTPView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        return MobileOTPService(request=request, kwargs=kwargs).send_otp()
+
+
+class VerifyMobileOTPView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        return MobileOTPService(request=request, kwargs=kwargs).verify_otp()

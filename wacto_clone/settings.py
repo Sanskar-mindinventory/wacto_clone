@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework_simplejwt',
     'rest_framework',
+    'corsheaders',
     'social_django',
     'drf_social_oauth2',
     'oauth2_provider',
@@ -54,6 +55,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -69,6 +71,8 @@ REST_FRAMEWORK = {
     ],
 }
 
+# CORS_ALLOWED_ORIGINS=["*"]
+CORS_ALLOW_ALL_ORIGINS=True
 
 ROOT_URLCONF = 'wacto_clone.urls'
 
@@ -162,6 +166,7 @@ AUTHENTICATION_BACKENDS = [
 
     # drf_social_oauth2
     'drf_social_oauth2.backends.DjangoOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
 
     # Custom Backend for the login
     'Users.custom_backends.EmailorUsername',

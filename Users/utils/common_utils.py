@@ -1,3 +1,4 @@
+import random
 from urllib import request
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
@@ -46,3 +47,13 @@ class SendVerificationEmail:
         context = CommonUtils(request=request_site).create_context(user=user)
         html_content = f'<a type="button" style="color: #0a3370;padding: 7px 15px; color: #fff; background: #0a3370; border-radius: 20px;text-decoration: none;display: inline-block;" href="{context.get("protocol")}://{context.get("domain")}/user-auth/reset-password/{context.get("uid")}/{context.get("token")}/">Password Reset Link</a>'
         EmailUtils().send_email(to_emails=user.email, subject='Password Reset Mail', html_content=html_content)
+
+class OTPGeneration:
+    @staticmethod
+    def create_otp(n=6):
+        """
+        Create a OTP of N digits
+        @param n: Number of digits
+        @return: random integer from 100000 to 999999
+        """
+        return random.randint((10 ** (n - 1)), (10 ** n) - 1)

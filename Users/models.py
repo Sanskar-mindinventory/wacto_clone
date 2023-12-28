@@ -64,6 +64,8 @@ class CustomUser(AbstractUser):
     subscription_type = models.ForeignKey(Subscription ,on_delete=models.CASCADE, default=1)
     terms_and_condition = models.BooleanField(default=True, blank=False, null=False)
     is_admin = models.BooleanField(default=False, blank=False, null=False)
+    otp = models.CharField(null=True, blank=True)
+    otp_expiry_time = models.DateTimeField(null=True, blank=True)
 
     @classmethod
     def create_custom_user(cls, kwargs):

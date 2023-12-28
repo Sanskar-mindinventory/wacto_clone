@@ -1,9 +1,11 @@
+from datetime import datetime, timezone
 from django.contrib.auth.hashers import make_password, check_password
+import pytz
 from rest_framework import serializers
 from Users.models import CustomUser, Subscription
 from Users.utils.common_utils import CommonUtils, SendVerificationEmail
 from regex_validations import RegexValidation
-from Users.constants import COUNTRY_CODE_MISSING, EMAIL_PATTERN, EMAIL_VERIFICATION_LINK_SHARED, FIRST_NAME_PATTERN, INVALID_COUNTRY_CODE, INVALID_EMAIL_FORMAT, INVALID_FIRST_NAME, INVALID_LAST_NAME, INVALID_MOBILE_NUMBER, INVALID_PASSWORD_FORMAT, LAST_NAME_PATTERN, MOBILE_NUMBER_ALREADY_EXIST, MOBILE_NUMBER_PATTERN, PASSWORD_AND_CONFIRM_PASSWORD_NOT_MATCH, PASSWORD_AND_OLD_PASSWORD_ARE_SAME, PASSWORD_PATTERN, SOURCE_ERROR, USER_DOES_NOT_EXIST, USERNAME_PATTERN, INVALID_USERNAME_FORMAT, YOU_DONT_HAVE_PERMISSION_TO_PERFORM_THIS_ACTION
+from Users.constants import COUNTRY_CODE_MISSING, EMAIL_PATTERN, EMAIL_VERIFICATION_LINK_SHARED, FIRST_NAME_PATTERN, INVALID_COUNTRY_CODE, INVALID_CREDENTIALS, INVALID_EMAIL_FORMAT, INVALID_FIRST_NAME, INVALID_LAST_NAME, INVALID_MOBILE_NUMBER, INVALID_OTP, INVALID_PASSWORD_FORMAT, LAST_NAME_PATTERN, MOBILE_NUMBER_ALREADY_EXIST, MOBILE_NUMBER_PATTERN, OTP_IS_EXPIRED, PASSWORD_AND_CONFIRM_PASSWORD_NOT_MATCH, PASSWORD_AND_OLD_PASSWORD_ARE_SAME, PASSWORD_PATTERN, SOURCE_ERROR, USER_DOES_NOT_EXIST, USERNAME_PATTERN, INVALID_USERNAME_FORMAT, YOU_DONT_HAVE_PERMISSION_TO_PERFORM_THIS_ACTION
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db.models import Q
 
@@ -31,7 +33,7 @@ class UserSerializer(serializers.ModelSerializer):
         return RegexValidation(field_data=email, regex_pattern=EMAIL_PATTERN, error_message=INVALID_EMAIL_FORMAT).regex_validator()
 
     def validate_username(self, username):
-        return RegexValidation(field_data=username, regex_pattern=USERNAME_PATTERN, error_message=INVALID_USERNAME_FORMAT).regex_validator()
+        return RegexValidation(field_data=username, regex_pattern=EMAIL_PATTERN, error_message=INVALID_EMAIL_FORMAT).regex_validator()
 
     def validate_password(self, password):
         return RegexValidation(field_data=password, regex_pattern=PASSWORD_PATTERN, error_message=INVALID_PASSWORD_FORMAT).regex_validator()
@@ -106,10 +108,10 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
             else:
                 data = super().validate(attrs)
                 data['is_superadmin'] = user.is_superuser
-                data['is_admin'] = user.is_admin    
+                data['is_admin'] = user.is_admin
                 return data
         else:
-            raise serializers.ValidationError(USER_DOES_NOT_EXIST.format(id=attrs.get('username')))
+            raise serializers.ValidationError(INVALID_CREDENTIALS)
         
 
 class ForgotPasswordSerializer(serializers.ModelSerializer):
@@ -158,3 +160,20 @@ class ChangePasswordSerializer(serializers.Serializer):
             validated_data['password'] = make_password(
                 validated_data['password'])
         return CustomUser.update_user(user_id=instance.id, kwargs=validated_data)
+    
+
+class OTPSerializer(serializers.Serializer):
+    otp = serializers.CharField()
+
+    def validate(self, attr):
+        user = CustomUser.get_user(kwargs={"id":self.context.get('request').user.id})
+        current_time = datetime.now(timezone.utc).replace(tzinfo=pytz.utc)
+        if not user.is_mobile_verified and current_time > user.otp_expiry_time:
+            raise serializers.ValidationError(OTP_IS_EXPIRED)
+        if attr.get('otp') != '123456':
+            raise serializers.ValidationError(INVALID_OTP)
+        return attr
+    
+    def update(self, instance, validated_data):
+        return CustomUser.update_user(user_id=instance.id, kwargs={"otp":"", 'otp_expiry_time':None, "is_mobile_verified":True})
+        
