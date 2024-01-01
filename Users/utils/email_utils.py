@@ -7,7 +7,8 @@ from Users.custom_exceptions import SendGridException
 class EmailUtils:
     def __init__(self):
         self.from_email_address = os.getenv("FROM_EMAIL_ADDRESS")
-        self.send_grid_client = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
+        self.send_grid_client = SendGridAPIClient(api_key='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')
+
 
     def send_email(self, subject, html_content, to_emails, from_email_address=None):
         try:

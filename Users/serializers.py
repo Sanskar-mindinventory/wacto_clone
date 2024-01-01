@@ -2,10 +2,10 @@ from datetime import datetime, timezone
 from django.contrib.auth.hashers import make_password, check_password
 import pytz
 from rest_framework import serializers
-from Users.models import CustomUser, Subscription
+from Users.models import CompanyDetails, CustomUser, DropDownCategoryItem, Subscription
 from Users.utils.common_utils import CommonUtils, SendVerificationEmail
 from regex_validations import RegexValidation
-from Users.constants import COUNTRY_CODE_MISSING, EMAIL_PATTERN, EMAIL_VERIFICATION_LINK_SHARED, FIRST_NAME_PATTERN, INVALID_COUNTRY_CODE, INVALID_CREDENTIALS, INVALID_EMAIL_FORMAT, INVALID_FIRST_NAME, INVALID_LAST_NAME, INVALID_MOBILE_NUMBER, INVALID_OTP, INVALID_PASSWORD_FORMAT, LAST_NAME_PATTERN, MOBILE_NUMBER_ALREADY_EXIST, MOBILE_NUMBER_PATTERN, OTP_IS_EXPIRED, PASSWORD_AND_CONFIRM_PASSWORD_NOT_MATCH, PASSWORD_AND_OLD_PASSWORD_ARE_SAME, PASSWORD_PATTERN, SOURCE_ERROR, USER_DOES_NOT_EXIST, USERNAME_PATTERN, INVALID_USERNAME_FORMAT, YOU_DONT_HAVE_PERMISSION_TO_PERFORM_THIS_ACTION
+from Users.constants import COMPANY_INDUSTRY_MISSING, COMPANY_NAME_PATTERN, COMPANY_PURPOSE_MISSING, COMPANY_SIZE_MISSING, COUNTRY_CODE_MISSING, EMAIL_PATTERN, EMAIL_VERIFICATION_LINK_SHARED, FIRST_NAME_PATTERN, INVALID_COMPANY_NAME, INVALID_COUNTRY_CODE, INVALID_CREDENTIALS, INVALID_EMAIL_FORMAT, INVALID_FIRST_NAME, INVALID_LAST_NAME, INVALID_MOBILE_NUMBER, INVALID_OTP, INVALID_PASSWORD_FORMAT, LAST_NAME_PATTERN, MOBILE_NUMBER_ALREADY_EXIST, MOBILE_NUMBER_PATTERN, OTP_IS_EXPIRED, PASSWORD_AND_CONFIRM_PASSWORD_NOT_MATCH, PASSWORD_AND_OLD_PASSWORD_ARE_SAME, PASSWORD_PATTERN, SOURCE_ERROR, USER_DOES_NOT_EXIST, USERNAME_PATTERN, INVALID_USERNAME_FORMAT, YOU_DONT_HAVE_PERMISSION_TO_PERFORM_THIS_ACTION
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db.models import Q
 
@@ -109,10 +109,15 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
                 data = super().validate(attrs)
                 data['is_superadmin'] = user.is_superuser
                 data['is_admin'] = user.is_admin
+                data['is_company_details_filled'] = self.check_company_details(user_id=user.id)
+                data['is_mobile_verified'] = user.is_mobile_verified
                 return data
         else:
             raise serializers.ValidationError(INVALID_CREDENTIALS)
         
+    def check_company_details(self, user_id):
+        return True if CompanyDetails.get_company_detail(kwargs={"user_id":user_id}) else False
+
 
 class ForgotPasswordSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField()
@@ -120,8 +125,7 @@ class ForgotPasswordSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ["password", "confirm_password"]
-    
-    
+       
     def validate_password(self, password):
         return RegexValidation(field_data=password, regex_pattern=PASSWORD_PATTERN, error_message=INVALID_PASSWORD_FORMAT).regex_validator()
     
@@ -177,3 +181,56 @@ class OTPSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         return CustomUser.update_user(user_id=instance.id, kwargs={"otp":"", 'otp_expiry_time':None, "is_mobile_verified":True})
         
+
+# class CompanyIndustrySerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = CompanyIndustry
+#         fields = "__all__" #["industry_type"]
+
+#     def validate_industry_type(self, industry_type):
+#         return RegexValidation(field_data=industry_type, regex_pattern=FIRST_NAME_PATTERN, error_message=INVALID_INDUSTRY_NAME).regex_validator()
+    
+#     def create(self, validated_data):
+#         return CompanyIndustry.create_company_industry(kwargs=validated_data)
+
+#     def update(self, company_industry_id, validated_data):
+#         return CompanyIndustry.update_company_industry(id=company_industry_id.id, kwargs=validated_data)
+
+
+class DropDownCategoryItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DropDownCategoryItem
+        fields = ["id", "item_name"]
+
+
+class CompanyDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompanyDetails
+        fields = "__all__"
+
+    def validate_company_name(self, company_name):
+        return RegexValidation(field_data=company_name, regex_pattern=COMPANY_NAME_PATTERN, error_message=INVALID_COMPANY_NAME).regex_validator()
+
+    def validate_company_industry(self, company_industry):
+        if not company_industry:
+            raise serializers.ValidationError(COMPANY_INDUSTRY_MISSING)
+        return company_industry
+    
+    def validate_company_size(self, company_size):
+        if not company_size:
+            raise serializers.ValidationError(COMPANY_SIZE_MISSING)
+        return company_size
+    
+    def validate_purpose(self, purpose):
+        if not purpose:
+            raise serializers.ValidationError(COMPANY_PURPOSE_MISSING)
+        return purpose
+    
+    def create(self, validated_data):
+        return CompanyDetails.create_company_detail(kwargs=validated_data)
+
+    def update(self, company_detail_id, validated_data):
+        return CompanyDetails.update_company_detail(id=company_detail_id.id, kwargs=validated_data)
+    
+    def to_representation(self, instance):
+        return super().to_representation(instance)

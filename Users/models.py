@@ -106,3 +106,84 @@ class SubscriptionHistory(models.Model):
     starting_date = models.DateTimeField(null=False, blank=False)
     ending_date = models.DateTimeField(null=False, blank=False)
     created_at = models.DateTimeField(null=False, blank=False)
+
+
+# class CompanyIndustry(models.Model):
+    # industry_type = models.CharField(max_length=100, blank=True, default="")
+    # created_on = models.DateTimeField(auto_now_add=True)
+    # updated_on = models.DateTimeField(auto_now=True)
+
+    # @classmethod
+    # def create_company_industry(cls, kwargs):
+    #     """
+    #     create user with given kwargs
+    #     """
+    #     return cls.objects.create(**kwargs)
+    
+    # @classmethod
+    # def get_company_industry(cls, kwargs=None):
+    #     """
+    #     get user if kwargs, else get all users
+    #     """
+    #     return cls.objects.filter(**kwargs).first() if kwargs else cls.objects.filter()
+
+    # @classmethod
+    # def update_company_industry(cls, id, kwargs):
+    #     """
+    #     Update user with details in kwargs and return user
+    #     @param user_id: user id
+    #     """
+    #     cls.objects.filter(id=id).update(**kwargs)
+    #     return cls.get_company_industry(kwargs={'id': id})
+    
+
+class DropDownCategory(models.Model):
+    category_name = models.CharField(max_length=100, blank=True, default="")
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+
+
+class DropDownCategoryItem(models.Model):
+    item_name=models.CharField(max_length=100, blank=True, default="")
+    category=models.ForeignKey(DropDownCategory, on_delete=models.CASCADE)
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+
+    @classmethod
+    def get_category_items(cls, kwargs=None):
+        """
+        get user if kwargs, else get all users
+        """
+        return cls.objects.filter(**kwargs)
+
+
+class CompanyDetails(models.Model):
+    user = models.OneToOneField( CustomUser, on_delete=models.CASCADE)
+    company_name = models.CharField(max_length=128, blank=True, default=None, null=True)
+    company_website = models.CharField(max_length=128, blank=True, default=None, null=True)
+    company_industry = models.ForeignKey(DropDownCategoryItem, on_delete=models.CASCADE, related_name='company_industry')
+    company_size = models.ForeignKey(DropDownCategoryItem, on_delete=models.CASCADE, related_name='company_size')
+    purpose = models.ForeignKey(DropDownCategoryItem, on_delete=models.CASCADE, related_name='purpose')
+
+    @classmethod
+    def create_company_detail(cls, kwargs):
+        """
+        create user with given kwargs
+        """
+        return cls.objects.create(**kwargs)
+    
+    @classmethod
+    def get_company_detail(cls, kwargs=None):
+        """
+        get user if kwargs, else get all users
+        """
+        return cls.objects.filter(**kwargs).first() if kwargs else cls.objects.filter()
+
+    @classmethod
+    def update_company_detail(cls, id, kwargs):
+        """
+        Update user with details in kwargs and return user
+        @param user_id: user id
+        """
+        cls.objects.filter(id=id).update(**kwargs)
+        return cls.get_company_detail(kwargs={'id':id})

@@ -4,9 +4,9 @@ from django.contrib.auth.tokens import default_token_generator
 from django.http import JsonResponse
 import pytz
 import requests
-from Users.constants import ACCOUNT_DOESNT_EXIST, EMAIL_IS_NOT_VERIFIED, EMAIL_SENT_SUCCESSFULLY, EMAIL_VERIFICATION_LINK_SHARED, MESSAGE_TEMPLATE, MOBILE_NUMBER_VERIFIED, NETTYFISH_MESSAGE_SEND_URL, OTP_SHARED_SUCCESSFULLY, PASSWORD_CHANGED_SUCCESSFULLY, RESET_PASSWORD_EMAIL_SENT, SOMETHING_WENT_WRONG, SUBSCRIPTION_ADDED, SUBSCRIPTION_DOES_NOT_EXIST, SUBSCRIPTION_UPDATED, USER_CREATED, USER_DOES_NOT_EXIST, USER_EXISTS, USER_UPDATED, YOU_CAN_NOT_UPDATE
-from Users.models import CustomUser, Subscription
-from Users.serializers import ChangePasswordSerializer, EmailSerializer, ForgotPasswordSerializer, OTPSerializer, SubscriptionSerializer, UserSerializer
+from Users.constants import ACCOUNT_DOESNT_EXIST, COMPANY_ADDED, COMPANY_DETAIL_DOES_NOT_EXIST, COMPANY_DETAIL_UPDATED, COMPANY_DOES_NOT_EXIST, EMAIL_IS_NOT_VERIFIED, EMAIL_SENT_SUCCESSFULLY, EMAIL_VERIFICATION_LINK_SHARED, MESSAGE_TEMPLATE, MOBILE_NUMBER_VERIFIED, NETTYFISH_MESSAGE_SEND_URL, OTP_SHARED_SUCCESSFULLY, PASSWORD_CHANGED_SUCCESSFULLY, RESET_PASSWORD_EMAIL_SENT, SOMETHING_WENT_WRONG, SUBSCRIPTION_ADDED, SUBSCRIPTION_DOES_NOT_EXIST, SUBSCRIPTION_UPDATED, USER_CREATED, USER_DOES_NOT_EXIST, USER_EXISTS, USER_UPDATED, YOU_CAN_NOT_UPDATE
+from Users.models import CompanyDetails, CustomUser, DropDownCategoryItem, Subscription
+from Users.serializers import ChangePasswordSerializer, CompanyDetailSerializer, DropDownCategoryItemSerializer, EmailSerializer, ForgotPasswordSerializer, OTPSerializer, SubscriptionSerializer, UserSerializer
 from django.utils.http import urlsafe_base64_decode
 
 from Users.utils.common_utils import CommonUtils, OTPGeneration, SendVerificationEmail
@@ -210,7 +210,6 @@ class MobileOTPService:
         user = CustomUser.update_user(user_id=self.request.user.id,kwargs={'otp':generated_otp, 'otp_expiry_time':otp_expiry_time})
         return JsonResponse({'msg': OTP_SHARED_SUCCESSFULLY.format(mobile=f"{user.country_code}-{user.mobile_number}")},status=200)
 
-
     def verify_otp(self):
         data  = self.request.data 
         user = CustomUser.get_user(kwargs={"id":self.request.user.id})
@@ -219,3 +218,56 @@ class MobileOTPService:
             otp_data.save()
             return JsonResponse({'msg':MOBILE_NUMBER_VERIFIED}, status=200)
         return JsonResponse(otp_data.errors, status=400)
+
+
+class CategoryService:
+    def __init__(self, request, kwargs):
+        self.request = request
+        self.kwargs = kwargs
+   
+    def get_category_view(self):
+        category_items = DropDownCategoryItem.get_category_items(kwargs={"category_id": self.kwargs.get('category_id')})
+        serializer = DropDownCategoryItemSerializer(category_items, many=True)
+        return JsonResponse(serializer.data, safe=False)
+
+    
+class CompanyDetailService:
+    def __init__(self, request, kwargs):
+        self.request = request
+        self.kwargs = kwargs
+
+    def get_all_company_detail_view(self):
+        company_detail = CompanyDetails.get_company_detail()
+        serializer = CompanyDetailSerializer(company_detail, many=True)
+        return JsonResponse(serializer.data, safe=False)
+    
+    def get_company_detail_view(self):
+        company_detail = CompanyDetails.get_company_detail(kwargs={"id": self.kwargs.get('id')})
+        serializer = CompanyDetailSerializer(company_detail)
+        if serializer:
+            return JsonResponse(serializer.data, safe=False)
+        return JsonResponse({"msg": COMPANY_DETAIL_DOES_NOT_EXIST.format(id=self.kwargs.get('id'))}, status=400, safe=False)
+    
+    def add_new_company_detail_view(self):
+        data = self.request.data
+        data['user']=self.request.user.id
+        serialized_company_detail = CompanyDetailSerializer(data=data)
+        if serialized_company_detail.is_valid():
+            company_detail = serialized_company_detail.save()
+            msg = COMPANY_ADDED.format(id=company_detail.id)
+            return JsonResponse({"msg": msg, 'data': serialized_company_detail.data}, status=201)
+        return JsonResponse(serialized_company_detail.errors, status=400)
+
+    def update_company_detail_view(self):
+        data = self.request.data
+        company_detail_instance = CompanyDetails.get_company_detail(
+            kwargs={"id": self.kwargs.get('id')})
+        if not company_detail_instance:
+            return JsonResponse({"msg": COMPANY_DOES_NOT_EXIST.format(id=self.kwargs.get('id')) + YOU_CAN_NOT_UPDATE}, status=400, safe=False)
+        serialized_company_detail = CompanyDetailSerializer(
+            instance=company_detail_instance, data=data, partial=True)
+        if serialized_company_detail.is_valid():
+            company_detail = serialized_company_detail.save()
+            msg = COMPANY_DETAIL_UPDATED.format(id=company_detail.id)
+            return JsonResponse({"msg": msg, 'data': serialized_company_detail.data}, status=200)
+        return JsonResponse(serialized_company_detail.errors, status=400)

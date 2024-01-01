@@ -39,6 +39,21 @@ OTP_IS_EXPIRED = "OTP is already expired."
 INVALID_OTP="Entered OTP is invalid."
 MOBILE_NUMBER_VERIFIED="Mobile number is verified successfully"
 
+INVALID_INDUSTRY_NAME = "Please entre Industry type between 3-100 character."
+INDUSTRY_DOES_NOT_EXIST = "Company Industry type doesn't exist with id: {id}"
+INDUSTRY_ADDED = "Company Industry type is added Successfully with Id : {id} "
+INDUSTRY_UPDATED = "Company Industry type: {id}'s data is updated successfully."
+INVALID_CATEGORY_NAME = "Please entre Category name between 3-100 character."
+INVALID_COMPANY_NAME = "Please entre Company name between 3-100 character."
+COMPANY_INDUSTRY_MISSING = "Company industry missing or empty."
+COMPANY_SIZE_MISSING = "Company size missing or empty."
+COMPANY_PURPOSE_MISSING = "Company purpose missing or empty."
+COMPANY_ADDED = "Company detail added Successfully with Id : {id} "
+COMPANY_DOES_NOT_EXIST = "Company detail doesn't exist with id: {id}"
+COMPANY_DETAIL_UPDATED = "Company detail with id: {id}'s data is updated successfully."
+COMPANY_DETAIL_DOES_NOT_EXIST = "Company detail with id: {id}'s does not exits."
+
+
 # Regex
 PASSWORD_PATTERN = "^(?!.*\s)(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{10,}$"
 USERNAME_PATTERN = "^(?!.*\s)(?=.*[a-z])[a-z0-9]{7,30}$"
@@ -46,6 +61,7 @@ EMAIL_PATTERN = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}$"
 MOBILE_NUMBER_PATTERN = "[0-9]{10,16}"
 FIRST_NAME_PATTERN = "^[A-Za-z]{3,100}$"
 LAST_NAME_PATTERN = "^[A-Za-z]{3,50}$"
+COMPANY_NAME_PATTERN = "^[A-Za-z \-.]{3,100}$"
 
 # SMS Sending API
 NETTYFISH_MESSAGE_SEND_URL="https://sms.nettyfish.com/api/v2/SendSMS"
